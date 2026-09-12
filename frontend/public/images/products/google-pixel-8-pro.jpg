@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="600" height="600">
+  <defs>
+    <linearGradient id="bgGrad_googlepixel8projpg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="50%" stop-color="#1e293b" />
+      <stop offset="100%" stop-color="#090d16" />
+    </linearGradient>
+    <linearGradient id="bodyGrad_googlepixel8projpg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#304a60" />
+      <stop offset="100%" stop-color="#192b3a" />
+    </linearGradient>
+    <linearGradient id="screenGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a" stop-opacity="0.9" />
+      <stop offset="100%" stop-color="#020617" stop-opacity="0.98" />
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#60a5fa" stop-opacity="0.25" />
+      <stop offset="100%" stop-color="#60a5fa" stop-opacity="0" />
+    </radialGradient>
+    <filter id="dropShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="16" stdDeviation="20" flood-color="#000000" flood-opacity="0.6"/>
+    </filter>
+  </defs>
+
+  <!-- Background Canvas -->
+  <rect width="600" height="600" fill="url(#bgGrad_googlepixel8projpg)" rx="24"/>
+  <circle cx="300" cy="300" r="260" fill="url(#glow)" />
+
+  <!-- Phone Outer Frame -->
+  <g filter="url(#dropShadow)">
+    <rect x="180" y="80" width="240" height="420" rx="36" fill="url(#bodyGrad_googlepixel8projpg)" stroke="#60a5fa" stroke-width="2.5"/>
+    
+    <!-- Inner Screen Bezel -->
+    <rect x="190" y="90" width="220" height="400" rx="28" fill="url(#screenGrad)" stroke="#334155" stroke-width="1.5"/>
+
+    <!-- Top Camera Notch / Dynamic Island -->
+    <rect x="260" y="102" width="80" height="18" rx="9" fill="#000000" stroke="#1e293b" stroke-width="1"/>
+    <circle cx="280" cy="111" r="4" fill="#1e293b"/>
+    <circle cx="320" cy="111" r="3" fill="#0284c7" opacity="0.6"/>
+
+    <!-- Screen UI Display Graphics -->
+    <text x="300" y="190" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="700" fill="#60a5fa" letter-spacing="3">GOOGLE</text>
+    <text x="300" y="225" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="20" font-weight="800" fill="#f8fafc">Pixel 8 Pro</text>
+    
+    <!-- Wallpaper Art Curves -->
+    <path d="M 200 350 Q 300 270 400 340 T 400 450 L 200 450 Z" fill="#60a5fa" opacity="0.15" />
+    <circle cx="300" cy="330" r="48" fill="none" stroke="#60a5fa" stroke-width="2" opacity="0.4" stroke-dasharray="4 4"/>
+    <circle cx="300" cy="330" r="36" fill="#60a5fa" opacity="0.2"/>
+
+    <!-- 5G / Status Icon -->
+    <text x="300" y="440" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="10" font-weight="600" fill="#94a3b8" letter-spacing="1.5">⚡ 5G ULTRA READY</text>
+    
+    <!-- Home Bar -->
+    <rect x="250" y="475" width="100" height="4" rx="2" fill="#64748b"/>
+  </g>
+
+  <!-- Bottom Spec Ribbon -->
+  <rect x="60" y="525" width="480" height="44" rx="12" fill="#0f172a" fill-opacity="0.8" stroke="#334155" stroke-width="1"/>
+  <text x="300" y="552" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="600" fill="#e2e8f0">Bay Blue • Tensor G3</text>
+</svg>
