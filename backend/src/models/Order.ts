@@ -15,6 +15,7 @@ import type { Payment } from './Payment.js';
 
 export type OrderStatus =
   | 'PENDING'
+  | 'PLACED'
   | 'CONFIRMED'
   | 'PROCESSING'
   | 'SHIPPED'
@@ -30,6 +31,12 @@ export class Order extends Model<InferAttributes<Order>, InferCreationAttributes
   declare subtotal: number;
   declare shippingAmount: CreationOptional<number>;
   declare totalAmount: number;
+  declare confirmedAt?: CreationOptional<Date | null>;
+  declare processingAt?: CreationOptional<Date | null>;
+  declare shippedAt?: CreationOptional<Date | null>;
+  declare deliveredAt?: CreationOptional<Date | null>;
+  declare cancelledAt?: CreationOptional<Date | null>;
+  declare cancellationReason?: CreationOptional<string | null>;
   declare createdAt: CreationOptional<Date>;
   declare updatedAt: CreationOptional<Date>;
 
@@ -67,13 +74,14 @@ Order.init(
     status: {
       type: DataTypes.ENUM(
         'PENDING',
+        'PLACED',
         'CONFIRMED',
         'PROCESSING',
         'SHIPPED',
         'DELIVERED',
         'CANCELLED'
       ),
-      defaultValue: 'PENDING',
+      defaultValue: 'PLACED',
       allowNull: false,
     },
     subtotal: {
@@ -102,6 +110,36 @@ Order.init(
         const val = this.getDataValue('totalAmount');
         return val === null ? null : parseFloat(val as unknown as string);
       },
+    },
+    confirmedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      field: 'confirmed_at',
+    },
+    processingAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      field: 'processing_at',
+    },
+    shippedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      field: 'shipped_at',
+    },
+    deliveredAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      field: 'delivered_at',
+    },
+    cancelledAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      field: 'cancelled_at',
+    },
+    cancellationReason: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      field: 'cancellation_reason',
     },
     createdAt: {
       type: DataTypes.DATE,

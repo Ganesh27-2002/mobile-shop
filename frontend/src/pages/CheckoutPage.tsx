@@ -614,7 +614,9 @@ export const CheckoutPage: React.FC = () => {
                     alt={it.product.name}
                     className="item-preview-img"
                     onError={(e) => {
-                      (e.target as HTMLImageElement).src = '/images/products/iphone-15-pro-max.png';
+                      const target = e.target as HTMLImageElement;
+                      target.onerror = null;
+                      target.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="%2394a3b8" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>';
                     }}
                   />
                   <div className="item-preview-info">

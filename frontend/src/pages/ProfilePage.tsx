@@ -93,6 +93,16 @@ export const ProfilePage: React.FC = () => {
           >
             📍 Saved Addresses
           </button>
+          {user.role === 'ADMIN' && (
+            <button
+              type="button"
+              onClick={() => navigate('/admin')}
+              className="btn btn-warning"
+              data-testid="profile-admin-btn"
+            >
+              🛡️ Admin Management Portal
+            </button>
+          )}
           <button
             type="button"
             onClick={handleLogout}

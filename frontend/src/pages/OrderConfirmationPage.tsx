@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useLocation, Link } from 'react-router-dom';
 import { orderService } from '../services/orderService.js';
 import { formatPrice, formatDate } from '../utils/formatters.js';
 import { getApiErrorMessage } from '../services/api.js';
+import { CancelOrderModal } from '../components/CancelOrderModal.js';
 import type { Order } from '../types/order.js';
 
 export const OrderConfirmationPage: React.FC = () => {
@@ -14,25 +15,46 @@ export const OrderConfirmationPage: React.FC = () => {
   );
   const [isLoading, setIsLoading] = useState<boolean>(!order);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  // Cancellation Modal state
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState<boolean>(false);
+  const [isCancelling, setIsCancelling] = useState<boolean>(false);
+
+  const fetchOrder = useCallback(async () => {
+    if (!orderId) return;
+    try {
+      setIsLoading(true);
+      setError(null);
+      const data = await orderService.getOrderById(orderId);
+      setOrder(data);
+    } catch (err) {
+      setError(getApiErrorMessage(err));
+    } finally {
+      setIsLoading(false);
+    }
+  }, [orderId]);
 
   useEffect(() => {
     if (!order && orderId) {
-      const fetchOrder = async () => {
-        try {
-          setIsLoading(true);
-          setError(null);
-          const data = await orderService.getOrderById(orderId);
-          setOrder(data);
-        } catch (err) {
-          setError(getApiErrorMessage(err));
-        } finally {
-          setIsLoading(false);
-        }
-      };
-
       fetchOrder();
     }
-  }, [order, orderId]);
+  }, [order, orderId, fetchOrder]);
+
+  const handleCancelOrder = async (reason: string) => {
+    if (!order) return;
+    try {
+      setIsCancelling(true);
+      await orderService.cancelOrder(order.id, reason);
+      setSuccessMessage('Order cancelled successfully. Inventory has been restored.');
+      setIsCancelModalOpen(false);
+      await fetchOrder();
+    } catch (err) {
+      throw err;
+    } finally {
+      setIsCancelling(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -60,88 +82,99 @@ export const OrderConfirmationPage: React.FC = () => {
     );
   }
 
+  const isCod = order.payment?.providerOrderId === 'COD';
   const addr = order.shippingAddress;
-  const payment = order.payment;
-  const isCod = payment?.providerOrderId === 'COD';
+  const isCancellable = ['PLACED', 'PENDING', 'CONFIRMED', 'PROCESSING'].includes(order.status);
 
   return (
     <div className="order-confirmation-container" data-testid="order-confirmation-page">
-      {/* Celebration Banner */}
+      {/* Hero Success Banner */}
       <div className="confirmation-hero" data-testid="confirmation-hero">
-        <div className="success-checkmark-circle" aria-hidden="true">✓</div>
+        <div className="success-checkmark-circle" aria-hidden="true">
+          ✓
+        </div>
         <h1 className="confirmation-title">Thank You for Your Order!</h1>
         <p className="confirmation-subtitle">
-          Your order has been received and confirmed. A dispatch notification will be sent shortly.
+          Your order has been received and is being processed by our fulfillment center.
         </p>
-        <div className="order-number-banner">
-          <span>Order Reference:</span>
-          <strong className="order-number-val" data-testid="order-number">{order.orderNumber}</strong>
+
+        {successMessage && (
+          <div className="alert-banner alert-success mt-3 mb-2" role="status" data-testid="cancellation-success-banner">
+            <span>✅ {successMessage}</span>
+            <button type="button" className="alert-close-btn" onClick={() => setSuccessMessage(null)}>
+              &times;
+            </button>
+          </div>
+        )}
+
+        <div className="order-meta-pill-bar">
+          <div className="meta-pill">
+            <span className="pill-label">Order Number</span>
+            <strong className="pill-value font-mono" data-testid="order-number">{order.orderNumber}</strong>
+          </div>
+          <div className="meta-pill">
+            <span className="pill-label">Order Date</span>
+            <strong className="pill-value" data-testid="order-date">{formatDate(order.createdAt)}</strong>
+          </div>
+          <div className="meta-pill">
+            <span className="pill-label">Order Status</span>
+            <span className={`status-badge status-${order.status.toLowerCase()}`} data-testid="order-status">
+              {order.status}
+            </span>
+          </div>
+          <div className="meta-pill">
+            <span className="pill-label">Payment Mode</span>
+            <span className="pill-value" data-testid="payment-method">
+              {isCod ? 'Cash on Delivery (COD)' : 'Credit / Debit Card'}
+            </span>
+          </div>
+          <div className="meta-pill">
+            <span className="pill-label">Payment Status</span>
+            <span className={`payment-pill ${order.payment?.status === 'SUCCESS' ? 'pill-success' : 'pill-pending'}`} data-testid="payment-status">
+              {order.payment?.status || 'PENDING'}
+            </span>
+          </div>
+          {order.payment?.providerPaymentId && (
+            <div className="meta-pill">
+              <span className="pill-label">Transaction ID</span>
+              <span className="pill-value font-mono" data-testid="transaction-id">
+                {order.payment.providerPaymentId}
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
       <div className="confirmation-grid">
-        {/* Left Column: Order Items & Delivery Details */}
-        <div className="confirmation-main">
-          {/* Order Status & Metadata Card */}
-          <div className="confirmation-card" data-testid="order-meta-card">
-            <div className="card-header-row">
-              <h2>Order Details</h2>
-              <span className={`status-badge status-${order.status.toLowerCase()}`} data-testid="order-status">
-                {order.status}
-              </span>
-            </div>
-            <div className="meta-grid">
-              <div className="meta-item">
-                <span className="meta-label">Order Date</span>
-                <strong className="meta-value" data-testid="order-date">{formatDate(order.createdAt)}</strong>
-              </div>
-              <div className="meta-item">
-                <span className="meta-label">Payment Mode</span>
-                <strong className="meta-value" data-testid="order-payment-method">
-                  {isCod ? 'Cash on Delivery (COD)' : 'Credit / Debit Card'}
-                </strong>
-              </div>
-              <div className="meta-item">
-                <span className="meta-label">Payment Status</span>
-                <strong
-                  className={`meta-value ${payment?.status === 'SUCCESS' ? 'text-success' : 'text-warning'}`}
-                  data-testid="payment-status"
-                >
-                  {payment?.status || 'PENDING'}
-                </strong>
-              </div>
-              <div className="meta-item">
-                <span className="meta-label">Transaction ID</span>
-                <strong className="meta-value mono-text" data-testid="transaction-id">
-                  {payment?.providerPaymentId || 'N/A'}
-                </strong>
-              </div>
-            </div>
-          </div>
-
-          {/* Ordered Products Itemized List */}
+        {/* Left Column: Items and Shipping Details */}
+        <div className="confirmation-main-column">
+          {/* Items Card */}
           <div className="confirmation-card" data-testid="order-items-card">
-            <h2>Ordered Items ({order.items.length})</h2>
+            <h2>Purchased Items ({order.items.length})</h2>
             <div className="order-items-list" data-testid="order-items-list">
               {order.items.map((item) => (
                 <div key={item.id} className="order-item-row" data-testid="order-item">
-                  <img
-                    src={item.productImage}
-                    alt={item.productName}
-                    className="order-item-thumb"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = '/images/products/iphone-15-pro-max.png';
-                    }}
-                  />
-                  <div className="order-item-info">
-                    <div className="order-item-brand">{item.productBrand}</div>
-                    <div className="order-item-title">{item.productName}</div>
-                    <div className="order-item-price-qty">
-                      {formatPrice(item.unitPrice)} &times; {item.quantity}
+                  <div className="item-thumbnail-container">
+                    <img
+                      src={item.productImage}
+                      alt={item.productName}
+                      className="item-thumbnail-img"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.onerror = null;
+                        target.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="%2394a3b8" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>';
+                      }}
+                    />
+                  </div>
+                  <div className="item-details-body">
+                    <div className="item-brand-tag">{item.productBrand}</div>
+                    <strong className="item-name-title">{item.productName}</strong>
+                    <div className="item-unit-calc">
+                      Qty: {item.quantity} &times; {formatPrice(item.unitPrice)}
                     </div>
                   </div>
-                  <div className="order-item-total" data-testid="order-item-total">
-                    {formatPrice(item.totalPrice)}
+                  <div className="item-total-col">
+                    <strong className="item-total-price">{formatPrice(item.totalPrice)}</strong>
                   </div>
                 </div>
               ))}
@@ -200,16 +233,42 @@ export const OrderConfirmationPage: React.FC = () => {
             </div>
 
             <div className="confirmation-actions">
-              <Link to="/orders" className="btn btn-primary btn-block" data-testid="view-orders-btn">
+              <Link
+                to={`/orders/${order.id}/tracking`}
+                className="btn btn-primary btn-block"
+                data-testid="track-order-btn"
+              >
+                Track Order Progress 📍
+              </Link>
+              <Link to="/orders" className="btn btn-secondary btn-block" data-testid="view-orders-btn">
                 View All Orders
               </Link>
               <Link to="/products" className="btn btn-outline btn-block" data-testid="continue-shopping-btn">
                 Continue Shopping
               </Link>
+              {isCancellable && (
+                <button
+                  type="button"
+                  className="btn btn-danger btn-block mt-2"
+                  onClick={() => setIsCancelModalOpen(true)}
+                  data-testid="cancel-order-btn"
+                >
+                  Cancel Order
+                </button>
+              )}
             </div>
           </div>
         </aside>
       </div>
+
+      {/* Cancel Order Modal */}
+      <CancelOrderModal
+        isOpen={isCancelModalOpen}
+        orderNumber={order.orderNumber}
+        onClose={() => setIsCancelModalOpen(false)}
+        onConfirm={handleCancelOrder}
+        isSubmitting={isCancelling}
+      />
     </div>
   );
 };

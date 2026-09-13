@@ -1,0 +1,20 @@
+export const LOW_STOCK_THRESHOLD = 5;
+export const DEFAULT_ADMIN_LIMIT = 20;
+
+export const ORDER_STATUS_OPTIONS = [
+  'PENDING',
+  'CONFIRMED',
+  'PROCESSING',
+  'SHIPPED',
+  'DELIVERED',
+  'CANCELLED',
+] as const;
+
+export const ORDER_STATUS_TRANSITIONS: Record<string, string[]> = {
+  PENDING: ['CONFIRMED', 'CANCELLED'],
+  CONFIRMED: ['PROCESSING', 'CANCELLED'],
+  PROCESSING: ['SHIPPED', 'CANCELLED'],
+  SHIPPED: ['DELIVERED'],
+  DELIVERED: [],
+  CANCELLED: [],
+};

@@ -14,6 +14,8 @@ export const formatPrice = (amount: number | null | undefined): string => {
   }).format(amount);
 };
 
+export const formatINR = formatPrice;
+
 /**
  * Returns human-readable stock status and corresponding CSS class name.
  */

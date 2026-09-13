@@ -39,3 +39,13 @@ export const createOrderSchema = z
   );
 
 export type CreateOrderInput = z.infer<typeof createOrderSchema>;
+
+export const cancelOrderSchema = z.object({
+  reason: z
+    .string()
+    .max(500, 'Cancellation reason must not exceed 500 characters')
+    .optional(),
+});
+
+export type CancelOrderInput = z.infer<typeof cancelOrderSchema>;
+

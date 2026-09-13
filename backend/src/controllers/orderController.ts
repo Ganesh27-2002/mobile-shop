@@ -73,3 +73,50 @@ export const getOrderById = async (
     next(error);
   }
 };
+
+export const trackOrder = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    if (!req.user?.userId) {
+      throw new AppError('Authentication required.', 401);
+    }
+
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const tracking = await orderService.trackOrder(req.user.userId, id);
+
+    res.status(200).json({
+      success: true,
+      data: tracking,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const cancelOrder = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    if (!req.user?.userId) {
+      throw new AppError('Authentication required.', 401);
+    }
+
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const order = await orderService.cancelOrder(req.user.userId, id, req.body);
+
+    res.status(200).json({
+      success: true,
+      message: 'Order cancelled successfully. Inventory stock has been restored.',
+      data: {
+        order,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};

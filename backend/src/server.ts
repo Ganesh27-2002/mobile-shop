@@ -5,9 +5,10 @@ import dotenv from 'dotenv';
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 dotenv.config();
 
-import express, { Request, Response } from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import { authenticateDatabase, sequelize } from './config/database.js';
+import { logger } from './utils/logger.js';
 // Import models to ensure associations are registered
 import './models/index.js';
 
@@ -37,6 +38,22 @@ app.use(
 );
 app.use(express.json());
 
+// HTTP Request Logging Middleware
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    logger.info(`${req.method} ${req.originalUrl || req.url} ${res.statusCode} [${duration}ms]`, {
+      method: req.method,
+      url: req.originalUrl || req.url,
+      statusCode: res.statusCode,
+      durationMs: duration,
+      ip: req.ip,
+    });
+  });
+  next();
+});
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
@@ -54,7 +71,10 @@ app.get('/api/health', async (_req: Request, res: Response) => {
     await sequelize.authenticate();
     dbStatus = 'connected';
     isDatabaseConnected = true;
-  } catch {
+  } catch (error) {
+    logger.error('Health check failed: Unable to connect to database', {
+      error: error instanceof Error ? error.message : String(error),
+    });
     dbStatus = 'disconnected';
     isDatabaseConnected = false;
   }
@@ -69,13 +89,27 @@ app.get('/api/health', async (_req: Request, res: Response) => {
 // Centralized Error Handling Middleware
 app.use(errorMiddleware);
 
+// Process-level unhandled error loggers
+process.on('unhandledRejection', (reason: unknown) => {
+  logger.error('Unhandled Promise Rejection detected', {
+    reason: reason instanceof Error ? reason.stack || reason.message : String(reason),
+  });
+});
+
+process.on('uncaughtException', (err: Error) => {
+  logger.error('Uncaught Exception detected', {
+    message: err.message,
+    stack: err.stack,
+  });
+});
+
 // Start Server & Authenticate Database
 const startServer = async () => {
   isDatabaseConnected = await authenticateDatabase();
 
   const server = app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
-    console.log(
+    logger.info(`Server is running on http://localhost:${PORT}`);
+    logger.info(
       `Database status: ${
         isDatabaseConnected
           ? 'Connected'
@@ -90,3 +124,4 @@ const startServer = async () => {
 const serverPromise = startServer();
 
 export { app, serverPromise };
+
