@@ -45,7 +45,7 @@ jobs:
       DB_NAME: mobile_shop_test
       DB_NAME_TEST: mobile_shop_test
       DB_USER: postgres
-      DB_PASSWORD: 123456
+      DB_PASSWORD: postgres
       JWT_SECRET: test-only-jwt-secret-key-3.0
       JWT_EXPIRES_IN: 1d
 
